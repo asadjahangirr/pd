@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+/* ============================================================
+   THEME  (Tailwind v4 — colors/fonts/animations as CSS tokens)
+   These generate utilities like bg-brand-600, text-ink, font-display …
+   ============================================================ */
+@theme {
+  /* Brand — apothecary pine green */
+  --color-brand-50:  #f2f9f5;
+  --color-brand-100: #dcefe5;
+  --color-brand-200: #b9dfcb;
+  --color-brand-300: #8bc7a9;
+  --color-brand-400: #57a882;
+  --color-brand-500: #338a65;
+  --color-brand-600: #226f51;
+  --color-brand-700: #1b5a43;
+  --color-brand-800: #174833;
+  --color-brand-900: #123a2b;
+
+  /* Neutrals & surfaces */
+  --color-ink:   #17241f;  /* primary text  */
+  --color-muted: #5c6b64;  /* secondary text */
+  --color-mist:  #f4f8f5;  /* pale section background */
+  --color-line:  #e4ece7;  /* hairline borders */
+
+  /* Functional accents (used sparingly) */
+  --color-accent: #d98a4e; /* discount badge */
+  --color-danger: #c0453b; /* out of stock   */
+
+  /* Fonts */
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
+}
+
+/* keyframes referenced by animate-[...] utilities */
+@keyframes fade-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slow-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+/* ============================================================
+   BASE
+   ============================================================ */
+body {
+  background: #ffffff;
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   REUSABLE COMPONENT CLASSES (buttons, nav, footer, envelope)
+   ============================================================ */
+
+/* --- Buttons --- */
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+  border-radius: 9999px; background: var(--color-brand-600); color: #fff;
+  padding: .8rem 1.6rem; font-family: var(--font-body); font-size: .9rem; font-weight: 600;
+  box-shadow: 0 6px 18px rgba(34,111,81,.25);
+  transition: transform .25s cubic-bezier(.22,1,.36,1), background .25s ease, box-shadow .25s ease;
+}
+.btn-primary:hover { background: var(--color-brand-700); transform: translateY(-2px); box-shadow: 0 10px 26px rgba(34,111,81,.32); }
+.btn-primary:active { transform: translateY(0); }
+
+.btn-outline {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9999px; border: 1.5px solid var(--color-brand-600);
+  color: var(--color-brand-700); background: transparent;
+  padding: .75rem 1.5rem; font-family: var(--font-body); font-size: .9rem; font-weight: 600;
+  transition: background .25s ease, color .25s ease, transform .2s ease;
+}
+.btn-outline:hover { background: var(--color-brand-600); color: #fff; transform: translateY(-2px); }
+
+.btn-ghost {
+  display: inline-flex; align-items: center;
+  border-radius: 9999px; padding: .8rem 1.2rem;
+  font-family: var(--font-body); font-size: .9rem; font-weight: 600; color: var(--color-brand-700);
+  transition: color .2s ease;
+}
+.btn-ghost:hover { color: var(--color-brand-800); }
+
+/* --- Carousel arrows --- */
+.carousel-arrow {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 44px; width: 44px; border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.9); color: var(--color-brand-700);
+  border: 1px solid var(--color-line);
+  box-shadow: 0 6px 18px rgba(23, 36, 31, .12);
+  backdrop-filter: blur(4px);
+  transition: background .25s ease, color .25s ease, transform .2s ease;
+}
+.carousel-arrow:hover { background: var(--color-brand-600); color: #fff; transform: scale(1.08); }
+.carousel-arrow:active { transform: scale(.96); }
+
+/* --- Navbar --- */
+.nav-link { position: relative; padding-block: 4px; color: var(--color-ink); transition: color .25s ease; }
+.nav-link::after {
+  content: ""; position: absolute; left: 0; bottom: 0; height: 2px; width: 100%;
+  background: var(--color-brand-600); transform: scaleX(0); transform-origin: left;
+  transition: transform .3s cubic-bezier(.22,1,.36,1);
+}
+.nav-link:hover { color: var(--color-brand-700); }
+.nav-link:hover::after { transform: scaleX(1); }
+
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 40px; width: 40px; border-radius: 9999px; font-size: 1rem; color: var(--color-ink);
+  transition: background .25s ease, color .25s ease, transform .2s ease;
+}
+.icon-btn:hover { background: var(--color-brand-50); color: var(--color-brand-700); transform: translateY(-1px); }
+
+.dropdown-item {
+  display: flex; align-items: center; gap: .6rem; padding: .7rem 1rem;
+  font-size: .85rem; color: var(--color-ink);
+  transition: background .2s ease, color .2s ease;
+}
+.dropdown-item:hover { background: var(--color-brand-50); color: var(--color-brand-700); }
+
+/* --- Scroll-reveal cards (toggled by IntersectionObserver in React) --- */
+.card-reveal {
+  opacity: 0; transform: translateY(28px);
+  transition: opacity .7s cubic-bezier(.22,1,.36,1), transform .45s cubic-bezier(.22,1,.36,1), box-shadow .35s ease;
+}
+.card-reveal.is-visible { opacity: 1; transform: translateY(0); }
+.card-reveal.is-visible:hover { transform: translateY(-6px); box-shadow: 0 18px 50px rgba(23,36,31,.10); }
+
+/* --- Footer --- */
+.footer-heading { font-family: var(--font-body); font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #fff; margin-bottom: 1rem; }
+.footer-list { display: flex; flex-direction: column; gap: .6rem; font-size: .875rem; }
+.footer-link { color: var(--color-brand-200); transition: color .2s ease, padding-left .2s ease; }
+.footer-link:hover { color: #fff; padding-left: 4px; }
+.footer-social {
+  display: inline-flex; height: 38px; width: 38px; align-items: center; justify-content: center;
+  border-radius: 9999px; background: var(--color-brand-800); color: var(--color-brand-100);
+  transition: background .25s ease, transform .2s ease, color .25s ease;
+}
+.footer-social:hover { background: var(--color-brand-600); color: #fff; transform: translateY(-2px); }
+
+/* --- Health-tip envelope (the signature element) --- */
+.envelope-scene { perspective: 1000px; }
+.envelope { position: relative; width: 340px; max-width: 88vw; height: 220px; cursor: pointer; }
+.env-back { position: absolute; inset: 0; background: var(--color-brand-700); border-radius: 14px; box-shadow: 0 24px 60px rgba(23,36,31,.28); }
+.env-letter {
+  position: absolute; left: 16px; right: 16px; top: 16px; bottom: 16px;
+  background: #fff; border-radius: 10px; padding: 22px;
+  display: flex; flex-direction: column; justify-content: center;
+  box-shadow: 0 8px 24px rgba(23,36,31,.12);
+  transform: translateY(0) scale(.96); opacity: 0; z-index: 1;
+  transition: transform .6s cubic-bezier(.22,1,.36,1), opacity .4s ease;
+}
+.envelope.open .env-letter { transform: translateY(-56%) scale(1); opacity: 1; z-index: 3; }
+.env-front {
+  position: absolute; inset: 0; border-radius: 14px; z-index: 2;
+  background: linear-gradient(135deg, var(--color-brand-600), var(--color-brand-700));
+  clip-path: polygon(0 40%, 50% 100%, 100% 40%, 100% 100%, 0 100%);
+}
+.env-flap {
+  position: absolute; top: 0; left: 0; right: 0; height: 60%; z-index: 4;
+  background: linear-gradient(135deg, var(--color-brand-500), var(--color-brand-700));
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top center; transform: rotateX(0deg); border-radius: 14px 14px 0 0;
+  transition: transform .6s ease;
+}
+.envelope.open .env-flap { transform: rotateX(180deg); z-index: 0; }
+.env-seal {
+  position: absolute; left: 50%; top: 33%; transform: translate(-50%,-50%); z-index: 5;
+  width: 42px; height: 42px; border-radius: 50%; background: var(--color-accent); color: #fff;
+  display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,.2);
+  transition: opacity .3s ease;
+}
+.envelope.open .env-seal { opacity: 0; }
+
+/* ============================================================
+   ACCESSIBILITY — respect reduced motion
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .card-reveal { opacity: 1; transform: none; }
+}
+/* ============================================================
+   PRODUCTS PAGE + PRODUCT DETAIL
+   >>> PASTE THIS AT THE VERY END of client/src/index.css <<<
+   ============================================================ */
+
+/* Category filter chips */
+.chip {
+  border-radius: 9999px; border: 1px solid var(--color-line); background: #fff;
+  padding: .45rem 1rem; font-family: var(--font-body); font-size: .8rem; font-weight: 500;
+  color: var(--color-muted); transition: background .2s ease, border-color .2s ease, color .2s ease;
+}
+.chip:hover { border-color: var(--color-brand-300); color: var(--color-brand-700); }
+.chip-active { background: var(--color-brand-600); border-color: var(--color-brand-600); color: #fff; }
+
+/* Quantity stepper */
+.qty-btn {
+  height: 40px; width: 40px; font-size: 1.1rem; color: var(--color-brand-700);
+  border-radius: 9999px; transition: background .2s ease;
+}
+.qty-btn:hover { background: var(--color-brand-50); }
+
+/* Review form inputs */
+.review-input {
+  display: block; width: 100%; border: 1px solid var(--color-line); border-radius: 12px;
+  padding: .7rem 1rem; font-family: var(--font-body); font-size: .9rem; color: var(--color-ink);
+  background: #fff; transition: border-color .2s ease, box-shadow .2s ease;
+}
+.review-input:focus { outline: none; border-color: var(--color-brand-400); box-shadow: 0 0 0 3px var(--color-brand-100); }
+.review-input::placeholder { color: var(--color-muted); }
