@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Local env — set VITE_API_URL in the Vercel dashboard for production instead
+.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

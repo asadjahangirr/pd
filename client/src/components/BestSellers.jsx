@@ -1,47 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext.jsx";
+import { useProducts } from "../context/ProductsContext.jsx";
+import ProductImage from "./ProductImage.jsx";
+import { productStatus } from "../lib/product.js";
+/* ONE card that rotates through the best-selling products automatically.
+   Best sellers = the most-reviewed products, pulled from the API. */
 
-/* ONE card that rotates through these products automatically.
-   Use transparent-background PNGs so the product floats on the panel. */
-const products = [
-  {
-    // ADD IMAGE (transparent PNG): client/public/images/glam.png
-    img: "/images/glam.png",
-    name: "Glamora Vitamin-C Serum",
-    desc: "A brightening vitamin-C serum that evens tone, fades dark spots, and restores a healthy glow with daily use.",
-    price: 1750,
-    oldPrice: 2100,     // set to null if there is no discount
-    badge: "discount",  // "discount" | "out" | null
-  },
-  {
-    // ADD IMAGE (transparent PNG): client/public/images/rayset.png
-    img: "/images/rayset.png",
-    name: "Ray Set Sunblock SPF-60",
-    desc: "Lightweight broad-spectrum SPF-60 protection that shields against UVA/UVB rays without a greasy finish.",
-    price: 750,
-    oldPrice: null,
-    badge: null,
-  },
-  {
-    // ADD IMAGE (transparent PNG): client/public/images/acneca.png
-    img: "/images/acneca.png",
-    name: "Acneca Anti-Acne Serum",
-    desc: "A targeted anti-acne treatment that calms breakouts, reduces redness, and helps prevent future blemishes.",
-    price: 1550,
-    oldPrice: null,
-    badge: "out",
-  },
-];
-
-function Badge({ type, price, oldPrice }) {
-  if (type === "out") {
+function Badge({ product }) {
+  const { soldOut, off } = productStatus(product);
+  if (soldOut) {
     return (
       <span className="absolute right-4 top-4 z-10 rounded-full bg-danger px-3 py-1 font-mono text-[11px] font-bold uppercase tracking-wide text-white shadow">
         Out of Stock
       </span>
     );
   }
-  if (type === "discount" && oldPrice) {
-    const off = Math.round((1 - price / oldPrice) * 100);
+  if (off > 0) {
     return (
       <span className="absolute right-4 top-4 z-10 rounded-full bg-accent px-3 py-1 font-mono text-[11px] font-bold uppercase tracking-wide text-white shadow">
         -{off}%
@@ -52,23 +27,63 @@ function Badge({ type, price, oldPrice }) {
 }
 
 export default function BestSellers() {
+  const { products: allProducts, loading } = useProducts();
+  const { addItem } = useCart();
+  const navigate = useNavigate();
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
 
+  // Best sellers = products the admin pinned as "featured" (in their order).
+  // If none are featured yet, fall back to the 3 most-reviewed.
+  const products = useMemo(() => {
+    const featured = allProducts.filter((p) => p.featured);
+    if (featured.length) return featured.slice(0, 8);
+    return [...allProducts].sort((a, b) => b.reviewsCount - a.reviewsCount).slice(0, 3);
+  }, [allProducts]);
+
   useEffect(() => {
-    if (paused) return;
+    if (paused || products.length === 0) return;
     const t = setInterval(() => setActive((i) => (i + 1) % products.length), 4200);
     return () => clearInterval(t);
-  }, [paused]);
+  }, [paused, products.length]);
+
+  // Keep the active index valid if the list changes
+  useEffect(() => {
+    if (active >= products.length) setActive(0);
+  }, [active, products.length]);
+
+  // Loading / empty state — keep the section header, swap the card for a note
+  if (loading || products.length === 0) {
+    return (
+      <section className="bg-white py-14 sm:py-20 md:py-28">
+        <div className="mx-auto max-w-7xl px-5 text-center lg:px-8">
+          <p className="font-mono text-xs uppercase tracking-[0.25em] text-brand-600">Best Sellers</p>
+          <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink md:text-4xl">
+            Loved by our customers
+          </h2>
+          <div className="mt-10">
+            {loading ? (
+              <>
+                <i className="fa-solid fa-spinner fa-spin text-2xl text-brand-400"></i>
+                <p className="mt-3 font-body text-sm text-muted">Loading best sellers…</p>
+              </>
+            ) : (
+              <p className="font-body text-sm text-muted">No products to show yet.</p>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   const p = products[active];
-  const soldOut = p.badge === "out";
+  const { soldOut } = productStatus(p);
 
   const next = () => setActive((i) => (i + 1) % products.length);
   const prev = () => setActive((i) => (i - 1 + products.length) % products.length);
 
   return (
-    <section className="bg-white py-20 md:py-28">
+    <section className="bg-white py-14 sm:py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-5 lg:px-8">
         <div className="mb-10 text-center">
           <p className="font-mono text-xs uppercase tracking-[0.25em] text-brand-600">Best Sellers</p>
@@ -91,24 +106,25 @@ export default function BestSellers() {
           </button>
           {/* Image panel */}
           <div className="relative flex min-h-80 items-center justify-center bg-brand-50 p-10 md:p-14">
-            <Badge type={p.badge} price={p.price} oldPrice={p.oldPrice} />
+            <Badge product={p} />
             {products.map((prod, i) => (
-              <img
-                key={i}
-                src={prod.img}
+              <ProductImage
+                key={prod.id}
+                image={prod.image}
+                image2={prod.image2}
                 alt={prod.name}
-                className={`max-h-72 w-auto object-contain transition-all duration-700 ease-out ${
-                  // speed of the images moving
+                // speed of the images moving (lower = faster, more visible motion)
+                className={`h-64 w-full transition-opacity duration-700 ease-out sm:h-72 ${
                   i === active
-                   ? "opacity-100 animate-[slow-float_3.5s_ease-in-out_infinite]"
-                    : "pointer-events-none absolute opacity-0"
+                   ? "opacity-100 animate-[slow-float_2.4s_ease-in-out_infinite]"
+                    : "pointer-events-none absolute inset-0 opacity-0"
                 }`}
               />
             ))}
           </div>
 
           {/* Details panel — re-keyed by `active` so text re-animates on change */}
-          <div key={active} className="flex flex-col justify-center gap-4 p-8 md:p-12">
+          <div key={active} className="flex flex-col justify-center gap-4 p-6 sm:p-8 md:p-12">
             <span className="font-mono text-xs uppercase tracking-widest text-brand-500 opacity-0 animate-[fade-up_0.5s_ease_forwards]">
               Best Seller {active + 1} / {products.length}
             </span>
@@ -116,19 +132,30 @@ export default function BestSellers() {
               {p.name}
             </h3>
             <p className="max-w-md font-body text-sm leading-relaxed text-muted opacity-0 animate-[fade-up_0.6s_ease_0.15s_forwards]">
-              {p.desc}
+              {p.description}
             </p>
             <div className="flex items-baseline gap-3 opacity-0 animate-[fade-up_0.6s_ease_0.25s_forwards]">
               <span className="font-mono text-2xl font-bold text-brand-700">Rs. {p.price.toLocaleString()}</span>
-              {p.oldPrice && (
+              {p.oldPrice > p.price && (
                 <span className="font-mono text-sm text-muted line-through">Rs. {p.oldPrice.toLocaleString()}</span>
               )}
             </div>
-            <div className="mt-3 flex flex-wrap gap-3 opacity-0 animate-[fade-up_0.6s_ease_0.35s_forwards]">
-              <button disabled={soldOut} className="btn-primary disabled:cursor-not-allowed disabled:opacity-50">
+            <div className="mt-3 flex flex-col gap-3 opacity-0 animate-[fade-up_0.6s_ease_0.35s_forwards] sm:flex-row sm:flex-wrap">
+              <button
+                disabled={soldOut}
+                onClick={() => {
+                  addItem({ id: p.id, name: p.name, price: p.price, image: p.image });
+                  navigate("/checkout");
+                }}
+                className="btn-primary w-full justify-center whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              >
                 Buy Now
               </button>
-              <button disabled={soldOut} className="btn-outline disabled:cursor-not-allowed disabled:opacity-50">
+              <button
+                disabled={soldOut}
+                onClick={() => addItem({ id: p.id, name: p.name, price: p.price, image: p.image })}
+                className="btn-outline w-full justify-center whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              >
                 <i className="fa-solid fa-cart-plus mr-2"></i> Add to Cart
               </button>
             </div>

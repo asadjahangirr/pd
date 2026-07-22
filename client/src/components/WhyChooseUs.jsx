@@ -40,9 +40,9 @@ export default function WhyChooseUs() {
   }, []);
 
   return (
-    <section ref={ref} className="bg-mist py-20 md:py-28">
+    <section ref={ref} className="bg-mist py-14 sm:py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-5 lg:px-8">
-        <div className="mb-14 text-center">
+        <div className="mb-10 text-center sm:mb-14">
           <p className="font-mono text-xs uppercase tracking-[0.25em] text-brand-600">Our Promise</p>
           <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink md:text-4xl">
             Why choose Delight Pharma

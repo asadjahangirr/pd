@@ -1,54 +1,38 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-
-/* Three hero slides. Each image gets its own headline + description.
-   Text is written for you; just drop the matching images in public/images/. */
-const slides = [
-  {
-    // ADD IMAGE: client/public/images/hero-1.png  (acne / clear-skin scene)
-    img: "/images/hero-1.png",
-    eyebrow: "Acne & Blemish Care",
-    title: "Clearer skin, backed by science",
-    text: "Target breakouts and blemishes with dermatologist-formulated serums designed for visible, gentle results.",
-  },
-  {
-    // ADD IMAGE: client/public/images/hero-2.png  (sun-protection scene)
-    img: "/images/hero-2.png",
-    eyebrow: "Daily Sun Protection",
-    title: "The protection your skin deserves",
-    text: "Broad-spectrum SPF-60 defense against sun damage, pigmentation, and premature aging — for everyday confidence.",
-  },
-  {
-    // ADD IMAGE: client/public/images/hero-3.png  (brightening / anti-aging glow scene)
-    img: "/images/hero-3.png",
-    eyebrow: "Brightening & Anti-Aging",
-    title: "Timeless glow, every day",
-    text: "Advanced brightening and anti-aging solutions that restore radiance and smooth, healthy-looking skin.",
-  },
-];
+import { useSiteContent } from "../context/SiteContentContext.jsx";
 
 export default function Hero() {
+  const { images, text } = useSiteContent();
   const [active, setActive] = useState(0);
+
+  // Slides = admin-editable text (Admin → Site text) + admin-managed images
+  const slides = [
+    { eyebrow: text.hero1_eyebrow, title: text.hero1_title, text: text.hero1_text, img: images.hero1 },
+    { eyebrow: text.hero2_eyebrow, title: text.hero2_title, text: text.hero2_text, img: images.hero2 },
+    { eyebrow: text.hero3_eyebrow, title: text.hero3_title, text: text.hero3_text, img: images.hero3 },
+  ];
+  const count = slides.length;
 
   // Auto-advance the slideshow
   useEffect(() => {
-    const t = setInterval(() => setActive((i) => (i + 1) % slides.length), 5500);
+    const t = setInterval(() => setActive((i) => (i + 1) % count), 5500);
     return () => clearInterval(t);
-  }, []);
+  }, [count]);
 
   const slide = slides[active];
-  const next = () => setActive((i) => (i + 1) % slides.length);
-  const prev = () => setActive((i) => (i - 1 + slides.length) % slides.length);
+  const next = () => setActive((i) => (i + 1) % count);
+  const prev = () => setActive((i) => (i - 1 + count) % count);
 
   return (
     <section className="relative overflow-hidden bg-mist">
-      <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 py-16 md:grid-cols-2 md:py-24 lg:px-8">
+      <div className="mx-auto grid max-w-7xl items-center gap-8 px-5 py-12 md:grid-cols-2 md:gap-12 md:py-24 lg:px-8">
         {/* Left: copy — re-keyed by `active` so it re-animates on every slide */}
         <div key={active} className="max-w-xl">
           <p className="mb-4 font-mono text-xs uppercase tracking-[0.25em] text-brand-600 opacity-0 animate-[fade-up_0.6s_ease_forwards]">
             {slide.eyebrow}
           </p>
-          <h1 className="font-display text-4xl font-semibold leading-[1.1] tracking-tight text-ink opacity-0 animate-[fade-up_0.7s_ease_0.1s_forwards] md:text-5xl lg:text-6xl">
+          <h1 className="font-display text-[2rem] font-semibold leading-[1.12] tracking-tight text-ink opacity-0 animate-[fade-up_0.7s_ease_0.1s_forwards] sm:text-4xl md:text-5xl lg:text-6xl">
             {slide.title}
           </h1>
           <p className="mt-6 max-w-md font-body text-base leading-relaxed text-muted opacity-0 animate-[fade-up_0.7s_ease_0.25s_forwards]">

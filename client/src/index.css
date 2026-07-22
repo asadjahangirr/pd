@@ -37,6 +37,7 @@
 @keyframes fade-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slow-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes pop { 0% { transform: scale(.5); } 60% { transform: scale(1.2); } 100% { transform: scale(1); } }
 
 /* ============================================================
    BASE
@@ -102,7 +103,10 @@ body {
 }
 .nav-link:hover { color: var(--color-brand-700); }
 .nav-link:hover::after { transform: scaleX(1); }
-
+/* current page: keep the underline shown + brand colour */
+  .nav-link-active { color: var(--color-brand-700); }
+  .nav-link-active::after { transform: scaleX(1); }
+  /* ICON BTN */
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center;
   height: 40px; width: 40px; border-radius: 9999px; font-size: 1rem; color: var(--color-ink);
@@ -124,6 +128,8 @@ body {
 }
 .card-reveal.is-visible { opacity: 1; transform: translateY(0); }
 .card-reveal.is-visible:hover { transform: translateY(-6px); box-shadow: 0 18px 50px rgba(23,36,31,.10); }
+/* Reveal-only blocks (plain text / images): keep the fade-in, skip the hover lift */
+.card-reveal.no-lift.is-visible:hover { transform: translateY(0); box-shadow: none; }
 
 /* --- Footer --- */
 .footer-heading { font-family: var(--font-body); font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #fff; margin-bottom: 1rem; }

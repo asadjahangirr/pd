@@ -55,7 +55,7 @@ export default function HealthTip() {
   };
 
   return (
-    <section className="bg-white py-20 md:py-28">
+    <section className="bg-white py-14 sm:py-20 md:py-28">
       <div className="mx-auto max-w-3xl px-5 text-center lg:px-8">
         <p className="font-mono text-xs uppercase tracking-[0.25em] text-brand-600">From Our Pharmacists</p>
         <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink md:text-4xl">

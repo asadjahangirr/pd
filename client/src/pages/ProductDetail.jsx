@@ -1,30 +1,70 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
 import ProductCard from "../components/ProductCard.jsx";
+import ProductImage from "../components/ProductImage.jsx";
 import StarRating from "../components/StarRating.jsx";
-import { getProductById, products } from "../data/products.js";
+import { useProducts } from "../context/ProductsContext.jsx";
+import { useCart } from "../context/CartContext.jsx";
+import { productStatus } from "../lib/product.js";
 
 export default function ProductDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { addItem } = useCart();
+  const { products, getProductById, loading, error, reload } = useProducts();
   const product = getProductById(id);
 
   const [qty, setQty] = useState(1);
-  const [added, setAdded] = useState(false);
-  const [reviews, setReviews] = useState(product?.reviews || []);
+  const [reviews, setReviews] = useState([]);
   const [form, setForm] = useState({ name: "", rating: 0, text: "" });
 
   // When navigating between products, scroll up and reset local state.
   useEffect(() => {
     window.scrollTo(0, 0);
     setQty(1);
-    setAdded(false);
     setForm({ name: "", rating: 0, text: "" });
-    setReviews(getProductById(id)?.reviews || []);
   }, [id]);
 
-  // Product doesn't exist (bad URL)
+  // Load this product's reviews once it's available from the API.
+  useEffect(() => {
+    setReviews(product?.reviews || []);
+  }, [product]);
+
+  // While the product list is still loading from the API
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        <div className="mx-auto max-w-3xl px-5 py-32 text-center">
+          <i className="fa-solid fa-spinner fa-spin text-3xl text-brand-400"></i>
+          <p className="mt-4 font-body text-sm text-muted">Loading product…</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // The API call failed
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        <div className="mx-auto max-w-3xl px-5 py-32 text-center">
+          <i className="fa-solid fa-triangle-exclamation mb-4 text-4xl text-danger"></i>
+          <h1 className="font-display text-2xl text-ink">Couldn't load this product</h1>
+          <p className="mt-2 font-body text-sm text-muted">{error}</p>
+          <button onClick={reload} className="btn-primary mt-6 inline-flex">
+            <i className="fa-solid fa-rotate-right mr-2"></i> Try again
+          </button>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Loaded, but no product matches this URL
   if (!product) {
     return (
       <div className="min-h-screen bg-white">
@@ -38,15 +78,14 @@ export default function ProductDetail() {
     );
   }
 
-  const soldOut = product.badge === "out";
-  const off = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
+  const { soldOut, off } = productStatus(product);
   const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
   const avg = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : product.rating;
 
-  const addToCart = () => {
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
-    // TODO: connect to real cart state later.
+  const addToCart = () => addItem(product, qty);
+  const buyNow = () => {
+    addItem(product, qty);
+    navigate("/checkout");
   };
 
   const submitReview = () => {
@@ -72,15 +111,19 @@ export default function ProductDetail() {
       {/* ===== Main product ===== */}
       <section className="mx-auto grid max-w-7xl gap-10 px-5 py-10 md:grid-cols-2 lg:px-8">
         {/* Image */}
-        <div className="relative flex items-center justify-center rounded-4xl border border-line bg-brand-50 p-10">
-          {product.badge === "discount" && off > 0 && (
-            <span className="absolute left-5 top-5 rounded-full bg-accent px-3 py-1 font-mono text-xs font-bold text-white">-{off}%</span>
-          )}
-          {soldOut && (
+        <div className="relative flex items-center justify-center rounded-[2rem] border border-line bg-brand-50 p-10">
+          {soldOut ? (
             <span className="absolute left-5 top-5 rounded-full bg-danger px-3 py-1 font-mono text-xs font-bold uppercase tracking-wide text-white">Out of Stock</span>
-          )}
-          {/* ADD IMAGE (transparent PNG) */}
-          <img src={product.image} alt={product.name} className="max-h-105 w-auto object-contain animate-[slow-float_6s_ease-in-out_infinite]" />
+          ) : off > 0 ? (
+            <span className="absolute left-5 top-5 rounded-full bg-accent px-3 py-1 font-mono text-xs font-bold text-white">-{off}%</span>
+          ) : null}
+          {/* Default: packaged shot (name-1.png); hover / touch-slideshow reveals the current image */}
+          <ProductImage
+            image={product.image}
+            image2={product.image2}
+            alt={product.name}
+            className="h-72 w-full animate-[slow-float_4s_ease-in-out_infinite] sm:h-105"
+          />
         </div>
 
         {/* Info */}
@@ -95,27 +138,23 @@ export default function ProductDetail() {
 
           <div className="mt-5 flex items-baseline gap-3">
             <span className="font-mono text-3xl font-bold text-brand-700">Rs. {product.price.toLocaleString()}</span>
-            {product.oldPrice && <span className="font-mono text-base text-muted line-through">Rs. {product.oldPrice.toLocaleString()}</span>}
+            {product.oldPrice > product.price && <span className="font-mono text-base text-muted line-through">Rs. {product.oldPrice.toLocaleString()}</span>}
           </div>
 
           <p className="mt-5 font-body leading-relaxed text-muted">{product.description}</p>
 
           {/* Quantity + actions */}
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <div className="flex items-center rounded-full border border-line">
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="flex items-center self-start rounded-full border border-line sm:self-auto">
               <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="qty-btn" aria-label="Decrease quantity">–</button>
               <span className="w-10 text-center font-mono text-sm">{qty}</span>
               <button onClick={() => setQty((q) => q + 1)} className="qty-btn" aria-label="Increase quantity">+</button>
             </div>
-            <button disabled={soldOut} onClick={addToCart} className="btn-primary disabled:cursor-not-allowed disabled:opacity-50">
+            <button disabled={soldOut} onClick={addToCart} className="btn-primary w-full justify-center whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
               <i className="fa-solid fa-cart-plus mr-2"></i> Add to Cart
             </button>
-            <button disabled={soldOut} className="btn-outline disabled:cursor-not-allowed disabled:opacity-50">Buy Now</button>
+            <button disabled={soldOut} onClick={buyNow} className="btn-outline w-full justify-center whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">Buy Now</button>
           </div>
-
-          {added && (
-            <p className="mt-4 font-body text-sm text-brand-700"><i className="fa-solid fa-check mr-1"></i> Added {qty} to cart</p>
-          )}
 
           {/* Trust row */}
           <div className="mt-8 grid grid-cols-3 gap-3 border-t border-line pt-6 text-center">
@@ -188,7 +227,7 @@ export default function ProductDetail() {
       {related.length > 0 && (
         <section className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
           <h2 className="mb-8 font-display text-2xl font-semibold text-ink">You may also like</h2>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
             {related.map((p) => <ProductCard key={p.id} product={p} />)}
           </div>
         </section>
