@@ -181,16 +181,10 @@ body {
    ACCESSIBILITY — respect reduced motion
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-  /* Don't remove animations outright — that would leave elements stuck at their
-     start state (e.g. opacity:0). Instead finish them instantly so content is
-     visible, and stop looping/large motion. */
-  *, *::before, *::after {
-    animation-duration: 1ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 1ms !important;
-    scroll-behavior: auto !important;
-  }
-  .card-reveal { opacity: 1; transform: none; }
+  /* Keep one-shot fades and crossfades smooth for everyone (they're gentle
+     opacity changes, not the kind of motion that causes issues). Only stop
+     continuous looping motion — floating images, spinners. */
+  [class*="infinite"], .fa-spin, .fa-spin-pulse { animation: none !important; }
 }
 /* ============================================================
    PRODUCTS PAGE + PRODUCT DETAIL

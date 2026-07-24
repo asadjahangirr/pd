@@ -29,16 +29,16 @@ export default function Hero() {
       <div className="mx-auto grid max-w-7xl items-center gap-8 px-5 py-12 md:grid-cols-2 md:gap-12 md:py-24 lg:px-8">
         {/* Left: copy — re-keyed by `active` so it re-animates on every slide */}
         <div key={active} className="max-w-xl">
-          <p className="mb-4 font-mono text-xs uppercase tracking-[0.25em] text-brand-600 opacity-0 animate-[fade-up_0.4s_ease_forwards]">
+          <p className="mb-4 font-mono text-xs uppercase tracking-[0.25em] text-brand-600 opacity-0 animate-[fade-up_0.5s_ease_forwards]">
             {slide.eyebrow}
           </p>
-          <h1 className="font-display text-[2rem] font-semibold leading-[1.12] tracking-tight text-ink opacity-0 animate-[fade-up_0.4s_ease_0.05s_forwards] sm:text-4xl md:text-5xl lg:text-6xl">
+          <h1 className="font-display text-[2rem] font-semibold leading-[1.12] tracking-tight text-ink opacity-0 animate-[fade-up_0.5s_ease_0.05s_forwards] sm:text-4xl md:text-5xl lg:text-6xl">
             {slide.title}
           </h1>
-          <p className="mt-6 max-w-md font-body text-base leading-relaxed text-muted opacity-0 animate-[fade-up_0.4s_ease_0.1s_forwards]">
+          <p className="mt-6 max-w-md font-body text-base leading-relaxed text-muted opacity-0 animate-[fade-up_0.5s_ease_0.1s_forwards]">
             {slide.text}
           </p>
-          <div className="mt-9 flex flex-wrap items-center gap-4 opacity-0 animate-[fade-up_0.4s_ease_0.15s_forwards]">
+          <div className="mt-9 flex flex-wrap items-center gap-4 opacity-0 animate-[fade-up_0.5s_ease_0.15s_forwards]">
             <Link to="/products" className="btn-primary">Shop All Products</Link>
             <Link to="/about" className="btn-ghost">
               Learn about us <i className="fa-solid fa-arrow-right ml-1 text-xs"></i>
