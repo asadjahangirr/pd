@@ -20,9 +20,15 @@ router.post("/login", async (req, res) => {
     return res.status(500).json({ error: "Admin auth is not configured on the server" });
   }
 
+  // Values pasted into hosting dashboards often pick up stray spaces or line
+  // breaks (the hash wraps in the box). A valid bcrypt hash has no whitespace,
+  // so strip it out; trim the username too. This makes login robust to paste.
+  const cleanHash = ADMIN_PASSWORD_HASH.replace(/\s+/g, "");
+  const cleanUser = ADMIN_USERNAME.trim();
+
   // Always run the hash compare so we don't leak which field was wrong.
-  const passwordOk = await bcrypt.compare(password, ADMIN_PASSWORD_HASH);
-  const usernameOk = username === ADMIN_USERNAME;
+  const passwordOk = await bcrypt.compare(password, cleanHash);
+  const usernameOk = username.trim() === cleanUser;
 
   if (!usernameOk || !passwordOk) {
     return res.status(401).json({ error: "Invalid username or password" });
