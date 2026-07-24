@@ -43,7 +43,7 @@ export default function BestSellers() {
 
   useEffect(() => {
     if (paused || products.length === 0) return;
-    const t = setInterval(() => setActive((i) => (i + 1) % products.length), 4200);
+    const t = setInterval(() => setActive((i) => (i + 1) % products.length), 6000);
     return () => clearInterval(t);
   }, [paused, products.length]);
 

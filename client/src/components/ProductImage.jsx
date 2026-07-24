@@ -37,7 +37,7 @@ export default function ProductImage({ image, image2, alt, imgClassName = "", cl
   // On touch devices, gently alternate the two images
   useEffect(() => {
     if (!isTouch || !hoverImg || hoverBroken) return;
-    const t = setInterval(() => setShowHover((s) => !s), 2200);
+    const t = setInterval(() => setShowHover((s) => !s), 3800);
     return () => clearInterval(t);
   }, [isTouch, hoverImg, hoverBroken]);
 
@@ -60,7 +60,7 @@ export default function ProductImage({ image, image2, alt, imgClassName = "", cl
         <img
           src={image}
           alt={alt}
-          className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ${imgClassName} ${baseOpacity}`}
+          className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-700 ${imgClassName} ${baseOpacity}`}
         />
         {/* Hover image */}
         {hasHover && (
@@ -69,7 +69,7 @@ export default function ProductImage({ image, image2, alt, imgClassName = "", cl
             alt=""
             aria-hidden="true"
             onError={() => setHoverBroken(true)}
-            className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ${imgClassName} ${hoverOpacity}`}
+            className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-700 ${imgClassName} ${hoverOpacity}`}
           />
         )}
       </span>
