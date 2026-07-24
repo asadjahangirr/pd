@@ -125,22 +125,22 @@ export default function BestSellers() {
 
           {/* Details panel — re-keyed by `active` so text re-animates on change */}
           <div key={active} className="flex flex-col justify-center gap-4 p-6 sm:p-8 md:p-12">
-            <span className="font-mono text-xs uppercase tracking-widest text-brand-500 opacity-0 animate-[fade-up_0.5s_ease_forwards]">
+            <span className="font-mono text-xs uppercase tracking-widest text-brand-500 opacity-0 animate-[fade-up_0.4s_ease_forwards]">
               Best Seller {active + 1} / {products.length}
             </span>
-            <h3 className="font-display text-2xl font-semibold text-ink opacity-0 animate-[fade-up_0.6s_ease_0.05s_forwards] md:text-3xl">
+            <h3 className="font-display text-2xl font-semibold text-ink opacity-0 animate-[fade-up_0.4s_ease_0.04s_forwards] md:text-3xl">
               {p.name}
             </h3>
-            <p className="max-w-md font-body text-sm leading-relaxed text-muted opacity-0 animate-[fade-up_0.6s_ease_0.15s_forwards]">
+            <p className="max-w-md font-body text-sm leading-relaxed text-muted opacity-0 animate-[fade-up_0.4s_ease_0.08s_forwards]">
               {p.description}
             </p>
-            <div className="flex items-baseline gap-3 opacity-0 animate-[fade-up_0.6s_ease_0.25s_forwards]">
+            <div className="flex items-baseline gap-3 opacity-0 animate-[fade-up_0.4s_ease_0.12s_forwards]">
               <span className="font-mono text-2xl font-bold text-brand-700">Rs. {p.price.toLocaleString()}</span>
               {p.oldPrice > p.price && (
                 <span className="font-mono text-sm text-muted line-through">Rs. {p.oldPrice.toLocaleString()}</span>
               )}
             </div>
-            <div className="mt-3 flex flex-col gap-3 opacity-0 animate-[fade-up_0.6s_ease_0.35s_forwards] sm:flex-row sm:flex-wrap">
+            <div className="mt-3 flex flex-col gap-3 opacity-0 animate-[fade-up_0.4s_ease_0.16s_forwards] sm:flex-row sm:flex-wrap">
               <button
                 disabled={soldOut}
                 onClick={() => {
