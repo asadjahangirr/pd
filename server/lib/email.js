@@ -1,23 +1,50 @@
 import nodemailer from "nodemailer";
 
-/* Sends order emails via Gmail (using a Gmail App Password).
-   If GMAIL_USER / GMAIL_APP_PASSWORD aren't set, it quietly skips —
-   so placing an order never fails just because email isn't configured. */
+/* Sends order emails.
+   Prefers a generic SMTP service (Brevo, SendGrid, …) if SMTP_* env vars are
+   set; otherwise falls back to Gmail (GMAIL_USER / GMAIL_APP_PASSWORD).
+   Credentials are whitespace-stripped, since values pasted into hosting
+   dashboards often pick up spaces/line-breaks (a common cause of "Invalid
+   login"). If nothing is configured it quietly skips, so orders never fail. */
 
 const STORE = process.env.STORE_NAME || "Delight Pharma";
 const rs = (n) => `Rs. ${Number(n || 0).toLocaleString()}`;
 
+const trim = (v) => (v || "").trim();
+const stripSpaces = (v) => (v || "").replace(/\s+/g, "");
+
+function fromAddress() {
+  const addr = trim(process.env.SMTP_FROM) || trim(process.env.GMAIL_USER);
+  return `"${STORE}" <${addr}>`;
+}
+
 let transporter = null;
 function getTransporter() {
-  const { GMAIL_USER, GMAIL_APP_PASSWORD } = process.env;
-  if (!GMAIL_USER || !GMAIL_APP_PASSWORD) return null;
-  if (!transporter) {
+  if (transporter) return transporter;
+  const env = process.env;
+
+  // Option 1 — generic SMTP (Brevo / SendGrid / Mailgun, etc.)
+  if (env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) {
+    const port = Number(env.SMTP_PORT) || 587;
+    transporter = nodemailer.createTransport({
+      host: trim(env.SMTP_HOST),
+      port,
+      secure: port === 465,
+      auth: { user: trim(env.SMTP_USER), pass: stripSpaces(env.SMTP_PASS) },
+    });
+    return transporter;
+  }
+
+  // Option 2 — Gmail app password
+  if (env.GMAIL_USER && env.GMAIL_APP_PASSWORD) {
     transporter = nodemailer.createTransport({
       service: "gmail",
-      auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+      auth: { user: trim(env.GMAIL_USER), pass: stripSpaces(env.GMAIL_APP_PASSWORD) },
     });
+    return transporter;
   }
-  return transporter;
+
+  return null;
 }
 
 function itemsTable(order) {
@@ -65,8 +92,8 @@ export async function sendOrderEmails(order) {
     console.log("ℹ Email not configured (GMAIL_USER/GMAIL_APP_PASSWORD) — skipping order emails.");
     return;
   }
-  const from = `"${STORE}" <${process.env.GMAIL_USER}>`;
-  const owner = process.env.OWNER_EMAIL || process.env.GMAIL_USER;
+  const from = fromAddress();
+  const owner = trim(process.env.OWNER_EMAIL) || trim(process.env.GMAIL_USER) || trim(process.env.SMTP_FROM);
   const jobs = [];
 
   if (order.customer?.email) {
