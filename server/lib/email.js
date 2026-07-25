@@ -97,24 +97,50 @@ function ownerHtml(order) {
   </div>`;
 }
 
-export async function sendOrderEmails(order) {
+// Send one email over Brevo's HTTPS API (port 443 — never blocked by hosts).
+async function sendViaBrevo({ to, subject, html }) {
+  const senderEmail = trim(process.env.SMTP_FROM) || trim(process.env.GMAIL_USER) || trim(process.env.BREVO_SENDER);
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": trim(process.env.BREVO_API_KEY),
+      "content-type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify({
+      sender: { email: senderEmail, name: STORE },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Brevo API ${res.status}: ${body.slice(0, 200)}`);
+  }
+}
+
+// Deliver via Brevo API if configured (best on hosts that block SMTP),
+// otherwise via SMTP/Gmail (works locally).
+async function deliver(msg) {
+  if (process.env.BREVO_API_KEY) return sendViaBrevo(msg);
   const t = getTransporter();
-  if (!t) {
-    console.log("ℹ Email not configured (GMAIL_USER/GMAIL_APP_PASSWORD) — skipping order emails.");
+  return t.sendMail({ from: fromAddress(), ...msg });
+}
+
+export async function sendOrderEmails(order) {
+  const configured = process.env.BREVO_API_KEY || getTransporter();
+  if (!configured) {
+    console.log("ℹ Email not configured (set BREVO_API_KEY, or GMAIL_USER/GMAIL_APP_PASSWORD) — skipping.");
     return;
   }
-  const from = fromAddress();
   const owner = trim(process.env.OWNER_EMAIL) || trim(process.env.GMAIL_USER) || trim(process.env.SMTP_FROM);
   const jobs = [];
 
   if (order.customer?.email) {
-    jobs.push(
-      t.sendMail({ from, to: order.customer.email, subject: `Your ${STORE} order #${order.orderNumber}`, html: customerHtml(order) })
-    );
+    jobs.push(deliver({ to: order.customer.email, subject: `Your ${STORE} order #${order.orderNumber}`, html: customerHtml(order) }));
   }
-  jobs.push(
-    t.sendMail({ from, to: owner, subject: `New order #${order.orderNumber} — ${rs(order.total)}`, html: ownerHtml(order) })
-  );
+  jobs.push(deliver({ to: owner, subject: `New order #${order.orderNumber} — ${rs(order.total)}`, html: ownerHtml(order) }));
 
   try {
     await Promise.all(jobs);
