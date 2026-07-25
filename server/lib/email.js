@@ -1,4 +1,13 @@
 import nodemailer from "nodemailer";
+import dns from "node:dns";
+
+// Some hosts (e.g. Render) can't reach mail servers over IPv6, which throws
+// ENETUNREACH. Prefer IPv4 for all DNS lookups in this process.
+try {
+  dns.setDefaultResultOrder("ipv4first");
+} catch {
+  /* older Node — ignore */
+}
 
 /* Sends order emails.
    Prefers a generic SMTP service (Brevo, SendGrid, …) if SMTP_* env vars are
@@ -31,6 +40,7 @@ function getTransporter() {
       port,
       secure: port === 465,
       auth: { user: trim(env.SMTP_USER), pass: stripSpaces(env.SMTP_PASS) },
+      family: 4, // force IPv4 (avoids ENETUNREACH on IPv6-less hosts)
     });
     return transporter;
   }
@@ -40,6 +50,7 @@ function getTransporter() {
     transporter = nodemailer.createTransport({
       service: "gmail",
       auth: { user: trim(env.GMAIL_USER), pass: stripSpaces(env.GMAIL_APP_PASSWORD) },
+      family: 4, // force IPv4 (avoids ENETUNREACH on IPv6-less hosts)
     });
     return transporter;
   }
