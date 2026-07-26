@@ -135,17 +135,29 @@ export async function sendOrderEmails(order) {
     return;
   }
   const owner = trim(process.env.OWNER_EMAIL) || trim(process.env.GMAIL_USER) || trim(process.env.SMTP_FROM);
-  const jobs = [];
+  const customerEmail = trim(order.customer?.email);
+  const n = order.orderNumber;
 
-  if (order.customer?.email) {
-    jobs.push(deliver({ to: order.customer.email, subject: `Your ${STORE} order #${order.orderNumber}`, html: customerHtml(order) }));
-  }
-  jobs.push(deliver({ to: owner, subject: `New order #${order.orderNumber} — ${rs(order.total)}`, html: ownerHtml(order) }));
+  // Send each independently and log each result, so one failure can't hide or
+  // block the other (and the exact reason is visible in the host's logs).
+  const send = async (label, msg) => {
+    try {
+      await deliver(msg);
+      console.log(`✓ ${label} email sent for #${n} -> ${msg.to}`);
+    } catch (err) {
+      console.error(`✗ ${label} email FAILED for #${n} -> ${msg.to}:`, err.message);
+    }
+  };
 
-  try {
-    await Promise.all(jobs);
-    console.log(`✓ Order emails sent for #${order.orderNumber}`);
-  } catch (err) {
-    console.error("✗ Order email error:", err.message);
+  const jobs = [send("Owner", { to: owner, subject: `New order #${n} — ${rs(order.total)}`, html: ownerHtml(order) })];
+
+  if (customerEmail) {
+    jobs.push(
+      send("Customer", { to: customerEmail, subject: `Your ${STORE} order #${n}`, html: customerHtml(order) })
+    );
+  } else {
+    console.log(`ℹ No customer email on order #${n} — customer confirmation not sent.`);
   }
+
+  await Promise.allSettled(jobs);
 }

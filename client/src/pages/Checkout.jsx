@@ -98,6 +98,11 @@ export default function Checkout() {
       setError("Please fill in your name, phone (WhatsApp), and address.");
       return;
     }
+    // Email is required so we can send the order confirmation.
+    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) {
+      setError("Please enter a valid email — we'll send your order confirmation there.");
+      return;
+    }
     setPlacing(true);
     try {
       const order = await placeOrder({
@@ -138,7 +143,11 @@ export default function Checkout() {
             {/* Contact */}
             <section>
               <h2 className="mb-3 font-display text-lg font-semibold text-ink">Contact</h2>
-              <input type="email" value={form.email} onChange={set("email")} placeholder="Email (for order updates)" autoComplete="email" className="review-input" />
+              <input type="email" value={form.email} onChange={set("email")} placeholder="Email address" autoComplete="email" className="review-input" />
+              <p className="mt-1.5 font-body text-xs text-muted">
+                <i className="fa-solid fa-envelope mr-1 text-brand-500"></i>
+                We'll email your order confirmation here.
+              </p>
             </section>
 
             {/* Delivery */}
